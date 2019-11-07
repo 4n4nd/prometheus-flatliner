@@ -46,7 +46,8 @@ class Prometheus:
                                         'time': start + chunk_seconds
                                         },
                                 verify=False, # Disable ssl certificate verification temporarily
-                                headers=self.headers)
+                                headers=self.headers,
+                                timeout=50)
             if response.status_code == 200:
                 data += response.json()['data']['result']
             else:
