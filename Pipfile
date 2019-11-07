@@ -4,7 +4,7 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-rx = "*"
+rx = "<3.0.0"
 pandas = "*"
 influxdb = "*"
 apscheduler = "*"
@@ -13,6 +13,9 @@ retrying = "*"
 dataclasses = "*"
 prometheus_client = "*"
 cachetools = "*"
+scikit-learn = "*"
+umap-learn = "*"
+ocp = {git = "https://gitlab.cee.redhat.com/ccx/insights-ocp.git", editable = true}
 
 [dev-packages]
 pytest = "*"

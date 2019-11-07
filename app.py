@@ -23,7 +23,9 @@ def main():
         _LOGGER.info("The metrics initialized were: {0}".format(metrics_list))
         metric_start_datetime = os.getenv("FLT_METRIC_START_DATETIME","16 Oct 2018")
         metric_end_datetime = os.getenv("FLT_METRIC_END_DATETIME","17 Oct 2018")
-        metric_chunk_size = os.getenv("FLT_METRIC_CHUNK_SIZE","15m")
+        # metric_chunk_size = os.getenv("FLT_METRIC_CHUNK_SIZE","15m")
+        # NOTE: this is needed for clustering (since it uses metrics at a given time, not time series) and is a temp fix
+        metric_chunk_size = '270s'
 
         if os.getenv("FLT_LIVE_METRIC_COLLECT","False") == "True":
             _LOGGER.info("Starting Live Metrics Collection Mode")
@@ -95,6 +97,14 @@ def main():
 
     weirdness_score.subscribe(add_scores)
 
+    # init and subscribe clustering flatliners
+    num_nearest_depls = 5
+    clusterer = flatliners.Clusterer(num_nearest=num_nearest_depls)
+    clustering_metrics_gatherer = flatliners.ClusteringMetricsGatherer()
+
+    versioned_metrics.subscribe(clustering_metrics_gatherer)
+    clustering_metrics_gatherer.subscribe(clusterer)
+
     if os.getenv("FLT_INFLUX_DB_DSN"):
         influxdb_storage = flatliners.InfluxdbStorage(os.environ.get("FLT_INFLUX_DB_DSN"))
         weirdness_score.subscribe(influxdb_storage)
@@ -103,8 +113,9 @@ def main():
         # Published Stale metrics are removed once every three times metric data is collected from prometheus
         metric_pruning_interval = 3 * round((dateparser.parse('now')-dateparser.parse(os.getenv("FLT_METRIC_CHUNK_SIZE","5m"))).total_seconds())
 
-        prom_endpoint = flatliners.PrometheusEndpoint(pruning_interval=metric_pruning_interval)
+        prom_endpoint = flatliners.PrometheusEndpoint(pruning_interval=metric_pruning_interval, num_nearest=num_nearest_depls)
         weirdness_score.subscribe(prom_endpoint)
+        clusterer.subscribe(prom_endpoint)
 
         # connect the metrics stream to publish data
         metrics_observable.connect()
