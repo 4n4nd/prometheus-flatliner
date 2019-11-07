@@ -47,7 +47,7 @@ class Prometheus:
                                         },
                                 verify=False, # Disable ssl certificate verification temporarily
                                 headers=self.headers,
-                                timeout=50)
+                                timeout=500)
             if response.status_code == 200:
                 data += response.json()['data']['result']
             else:
